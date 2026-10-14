@@ -27,30 +27,26 @@ Prices are typical US retail estimates from late 2026 (Amazon, AliExpress, Adafr
 | 18650 battery, holder, TP4056 charge board | Wireless power | $20 |
 | Electronics starter kit (breadboard, jumpers, resistors, switches) | Prototyping | $20 |
 | Soldering iron kit with solder and wick | Making it permanent | $30 |
-| EVA foam sheets, contact cement, heat gun | Armor shell, the classic cheap prop method | $55 |
-| Plasti Dip, metallic paint, sealant | Red and gold finish | $35 |
-| **Subtotal** | | **≈ $196** |
+| Entry 3D printer (Bambu Lab A1 mini or similar) | Prints the armor shell and the parts you'll sell | $200–250 |
+| 2 rolls of PLA | Shell material | $35 |
+| Filler primer, sandpaper, metallic paint, clear coat | A red and gold finish that reads as metal | $40 |
+| **Total** | | **≈ $380–430** |
 
-### Option: your own 3D printer
+The printer is the core purchase. It makes the shell, and it lets you sell printed parts and test the STL designs you'll list. If money gets tight, a makerspace or library printer is the fallback.
 
-| Part | Est. cost |
-| --- | --- |
-| Entry printer (Bambu Lab A1 mini or similar) | $200–250 |
-| 2 rolls of PLA | $35 |
-
-With the printer the total is about **$430–480**, which still fits. The printer also makes money, since it lets you sell printed parts and test the STL designs you'll list. Without it, use a makerspace or library printer, or stick with foam.
+The printed parts also become molds for fiberglass or carbon fiber shells in stage two, and the designs later become cut aluminum or steel plates.
 
 ## Build order
 
 1. **Week 1:** Get ADAM listening on the laptop. Say "ADAM, repulsor" and it prints a response.
 2. **Week 2:** Wire the ESP32, LED ring and motion sensor on a breadboard. Raise your palm and the light fires.
 3. **Week 3:** Connect them. The voice command or the gesture fires the repulsor over Wi-Fi.
-4. **Week 4:** Build the foam or printed shell, mount the electronics, then paint it.
+4. **Week 4:** Print, sand and paint the shell, then mount the electronics.
 
 Film every step. Week 4's reveal is your first real video.
 
 ## What comes after
 
-- Publish the gauntlet design (STL or foam pattern) for sale on Cults3D or Etsy.
+- Publish the gauntlet STL for sale on Cults3D or Etsy.
 - Put the leftover money toward the helmet, which is stage two.
 - Keep a running total of money spent and earned in `docs/ledger.md`.
