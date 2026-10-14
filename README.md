@@ -2,59 +2,58 @@
 
 *A device, a man.*
 
-ADAM is my personal take on an Iron Man–style build. The idea is a wearable system that extends what one person can do, built step by step and kept here so I can track how it changes over time.
+ADAM is a device intended for people. At its core is a **ledger**: a record of
+what each person has done, who judged it, and why, kept so that nobody can
+quietly rewrite it.
 
-> **Placeholder:** _What does the name ADAM stand for, if anything? (e.g. "Advanced Defense And Mobility")_
+## Purpose
 
-## Vision
+ADAM works in two steps, in this order:
 
-> **Placeholder:** _In two or three sentences, describe what finished ADAM looks like and what it lets you do._
+1. **Money.** Build up the resources to do anything at all.
+2. **Rectification.** Use them to put wrongs right, judged against a stated
+   definition of justice instead of whoever happens to be in charge.
 
-Guiding goals:
+The ledger connects the two. Every decision about who earned what is written
+down, signed and open to appeal, so both the money and the rectification can be
+checked by the people they affect.
 
-- **Wearable first.** The person comes first; the hardware works around them.
-- **Built in stages.** Each piece should work and be tested on its own before it's added to the rest.
-- **Safe by design.** Power, heat and moving parts never put the wearer at risk.
-- _Placeholder: add your own goal_
+## The ledger
 
-## Components
+The ledger is a single Python script that keeps two append-only files:
 
-The system is split into subsystems. Each one can be built and tested on its own.
+- `ledger.jsonl` holds every change to a person's standing and every change to
+  the rules.
+- `audit_log.jsonl` holds every grading decision: the submission, the grade and
+  the reasoning.
 
-| Subsystem | Purpose | Status | Notes |
-|---|---|---|---|
-| Power core | Supplies and manages power for everything else | _Not started_ | _Placeholder: battery type, voltage, capacity_ |
-| Frame / armor | Structure and protection | _Not started_ | _Placeholder: materials, fabrication method (3D print, metal, foam)_ |
-| Helmet & HUD | Display, cameras and sensors in front of the wearer | _Not started_ | _Placeholder: display hardware, field of view_ |
-| Onboard assistant | Voice/AI interface that controls the suit | _Not started_ | _Placeholder: hardware (e.g. Raspberry Pi), software stack_ |
-| Actuation | Motors or servos for moving parts (faceplate, joints) | _Not started_ | _Placeholder: actuator types, controller board_ |
-| Sensors | Awareness of the wearer and surroundings | _Not started_ | _Placeholder: IMU, temperature, distance, etc._ |
+How it works:
 
-> **Placeholder:** _Add, remove or rename subsystems to match your actual plan._
+- **Tamper-evident.** Each line carries a hash of itself and of the line before
+  it, so an altered or deleted line breaks the chain.
+- **Signed.** Every decision names who made it (a named human, an examiner or a
+  formula) and is signed with that decider's SSH key.
+- **Published rules.** Each task lists its criteria. A pass means every
+  criterion was met, and a fail says which ones weren't. A rule change binds
+  nobody until its fingerprint has been delivered to everyone it affects.
+- **Appeals.** Anyone can contest a decision about their own work, and the
+  person who made the decision can't grade the appeal.
+- **No transfers.** No command moves standing from one person to another.
+  Standing is earned, never handed over.
 
-## Repository layout
+## Justice
 
-> **Placeholder:** _Fill in once code, CAD files or docs are added. A possible starting point:_
->
-> ```
-> docs/       design notes and diagrams
-> hardware/   CAD models, wiring diagrams, parts lists
-> firmware/   code that runs on microcontrollers
-> software/   the onboard assistant and HUD
-> ```
+Rectification needs a definition of justice that can actually be checked.
+[docs/justice.md](docs/justice.md) defines it with five tests (consistency,
+proportionality, procedure, position-neutrality and remedy), each run against a
+criterion that has to be stated up front.
 
-## Next steps
+## Docs
 
-- [ ] Write down the Vision above in your own words
-- [ ] Pick the first subsystem to build (a common start is the helmet or the power core)
-- [ ] Make a parts list and budget for that subsystem
-- [ ] Sketch or model the first prototype
-- [ ] _Placeholder: add your own next step_
+- [Justice: an operational definition](docs/justice.md)
 
-## Safety
+## Status
 
-Building wearable hardware involves batteries, heat, sharp edges and moving parts. Test each subsystem off the body first, fuse and protect battery packs, and never wear a prototype you haven't tested on the bench.
-
-## Author
-
-> **Placeholder:** _Your name / handle and how to reach you._
+ADAM is at an early stage. The ledger runs and has tests, but it hasn't been
+added to this repository yet. The justice definition and its code are in open
+pull requests, along with a first hardware build (a gauntlet).
