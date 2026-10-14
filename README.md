@@ -41,16 +41,17 @@ How it works:
 - **No transfers.** No command moves standing from one person to another.
   Standing is earned, never handed over.
 
-## Justice
+## Justice: the diamond shield
 
 Rectification needs a definition of justice that can actually be checked.
-[docs/justice.md](docs/justice.md) defines it with five tests (consistency,
+[docs/justice.md](docs/justice.md) defines it as the diamond shield, a remix of
+Iron Dome that intercepts decisions failing any of five tests (consistency,
 proportionality, procedure, position-neutrality and remedy), each run against a
 criterion that has to be stated up front.
 
 ## Docs
 
-- [Justice: an operational definition](docs/justice.md)
+- [The diamond shield: an operational definition of justice](docs/justice.md)
 
 ## Status
 
