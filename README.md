@@ -3,4 +3,4 @@ a device a man
 
 ## Docs
 
-- [Justice: an operational definition](docs/justice.md)
+- [The diamond shield: an operational definition of justice](docs/justice.md)

@@ -1,4 +1,4 @@
-# Justice: an operational definition
+# The diamond shield: an operational definition of justice
 
 An operational definition says what you would observe or do to decide whether
 something is just. It can't rest on words like "fairness" or "what people
@@ -7,6 +7,29 @@ deserve", because those only move the question somewhere else.
 One part can't be operationalized away: the **criterion**, meaning what the
 outcome should track. That is a value choice, so this definition takes it as an
 explicit input and makes everything else checkable around it.
+
+## The diamond shield
+
+The diamond shield is a remix of Iron Dome. Iron Dome doesn't try to stop
+everything in the air. It tracks each incoming rocket, works out whether it
+will land on something that matters, and intercepts only the ones that will.
+Everything else is let through.
+
+The diamond shield does the same job for decisions. Every decision, rule or
+outcome that reaches it is screened against a stated criterion C using the five
+tests below:
+
+| Iron Dome | Diamond shield |
+|-----------|----------------|
+| Detect: radar picks up a launch | **Detect:** a decision, rule or outcome is recorded, with the parties it affects |
+| Track: compute the trajectory | **Assess:** state C, then run the five tests and get a profile |
+| Decide: will it hit a populated area? | **Decide:** does any test fail for anyone it affects? |
+| Intercept, or let it fall in open ground | **Intercept** a failing decision before it lands: block it, send it back for correction, or trigger a remedy. **Pass** everything that clears all five. |
+
+Two things carry over from the original. The shield stays out of the way of
+decisions that pass, so it doesn't second-guess just outcomes. And every
+intercept comes with the profile that triggered it, so anyone can see which
+test failed and for whom. The rest of this document defines those tests.
 
 ## Definition
 
