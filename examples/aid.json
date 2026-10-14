@@ -1,0 +1,11 @@
+{
+  "description": "Disaster aid allocated to four households",
+  "parties": [
+    {"name": "A", "outcome": 300, "measures": {"need": 3, "contribution": 1}, "attributes": {"district": "north"}},
+    {"name": "B", "outcome": 100, "measures": {"need": 3, "contribution": 2}, "attributes": {"district": "south"}},
+    {"name": "C", "outcome": 200, "measures": {"need": 2, "contribution": 2}, "attributes": {"district": "north"}},
+    {"name": "D", "outcome": 50, "measures": {"need": 1, "contribution": 3}, "attributes": {"district": "south"}}
+  ],
+  "procedure": {"notice": true, "hearing": true, "reasons": true, "impartial_decider": true, "appeal": false},
+  "acceptance": {"north": 0.78, "south": 0.71}
+}
