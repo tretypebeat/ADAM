@@ -49,9 +49,10 @@ Tests: `python -m unittest discover -s civcoin -v`
 
 ## Assumptions and open questions
 
-- **Assumption:** "civcoin is with TSP" means civcoin belongs to TSP. What
-  TSP stands for isn't defined anywhere in ADAM yet, so this design doesn't
-  depend on it.
+- **Ownership:** civcoin sits under TSP, the Tre Sphere Prerogative.
+  **Assumption:** that makes Trenton the final say on civcoin's rules (who may
+  mint, at what rate). Those decisions are still written into the book and
+  open to appeal like any other.
 - **Assumption:** civcoin is a book kept by ADAM, not a blockchain token. The
   hash chain gives tamper evidence without a network. It could be put on a
   public chain later.
