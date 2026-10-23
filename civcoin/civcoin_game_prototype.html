@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CivCoin Hybrid Game with Blockchain</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f0f0f0; }
+#aiMap { border:1px solid #000; background:#fff; }
+#aiInfo { position:absolute; background: rgba(255,255,255,0.9); border: 1px solid #000; padding:5px; display:none; pointer-events:none; z-index:10; }
+#eventAlert { position:fixed; top:10px; right:10px; background-color:rgba(255,255,0,0.9); border:1px solid black; padding:10px; display:none; z-index:100; }
+#controls { margin-top:10px; }
+button { margin:2px; }
+</style>
+</head>
+<body>
+<h2>CivCoin Hybrid Game with Blockchain</h2>
+<canvas id="aiMap" width="600" height="500"></canvas>
+<div id="aiInfo"></div>
+<div id="eventAlert"></div>
+<div id="controls">
+  <button onclick="connectWallet()">Connect Wallet</button>
+  <button onclick="withdrawToBlockchain(50)">Withdraw 50 CivCoin</button>
+  <button onclick="depositFromBlockchain(50)">Deposit 50 CivCoin</button>
+  <span id="playerBalance">Player Balance: 100 CivCoin</span>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+<script>
+// ----- Game Variables -----
+let year = 1;
+let civCoin = 100;
+let money = 500;
+let military = 50;
+let science = 0;
+let era = "Ancient";
+
+let aiCivCoins = {rival1: 100, rival2: 120, rival3: 90};
+let aiMoney = {rival1:200, rival2:150, rival3:180};
+let aiTechEra = {rival1:"Ancient", rival2:"Ancient", rival3:"Ancient"};
+let aiAlliances = {rival1:[], rival2:[], rival3:[]};
+let aiMemory = {rival1:[], rival2:[], rival3:[]};
+
+let positions = {rival1:{x:100,y:100,r:20}, rival2:{x:500,y:100,r:20}, rival3:{x:300,y:400,r:20}, player:{x:300,y:250,r:20}};
+let tradeFlows = [];
+let diplomacyState = "peace";
+
+// ----- Blockchain Variables -----
+let provider, signer, playerAddress;
+const civCoinAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+const civCoinAbi = [
+    "function mint(address to, uint256 amount) external",
+    "function burn(address from, uint256 amount) external",
+    "function balanceOf(address account) view returns (uint256)",
+    "function transfer(address to, uint256 amount) returns (bool)"
+];
+let civCoinContract;
+
+// ----- Draw Map -----
+const canvas = document.getElementById("aiMap");
+const ctx = canvas.getContext("2d");
+const infoBox = document.getElementById("aiInfo");
+const alertBox = document.getElementById("eventAlert");
+const eraColors = {"Ancient":"#A0522D","Medieval":"#8B4513","Industrial":"#708090","Space":"#4B0082"};
+
+function drawMap(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  Object.keys(aiAlliances).forEach(ai => {
+    aiAlliances[ai].forEach(ally => {
+      ctx.beginPath(); ctx.moveTo(positions[ai].x, positions[ai].y);
+      ctx.lineTo(positions[ally].x, positions[ally].y);
+      ctx.strokeStyle="green"; ctx.lineWidth=3; ctx.stroke();
+    });
+  });
+  Object.keys(positions).forEach(name => {
+    ctx.beginPath(); ctx.arc(positions[name].x, positions[name].y, positions[name].r, 0, 2*Math.PI);
+    let eraName = (name==="player") ? era : aiTechEra[name];
+    ctx.fillStyle = (name==="player")?"gold":(eraColors[eraName]||"lightblue");
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle="black";
+    ctx.fillText(name, positions[name].x-15, positions[name].y+35);
+  });
+  animateTradeFlows();
+}
+
+// ----- Hover Info -----
+canvas.addEventListener("mousemove",function(e){
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  let hovered=false;
+  Object.keys(positions).forEach(name=>{
+    let pos=positions[name];
+    let dist=Math.sqrt((mouseX-pos.x)**2+(mouseY-pos.y)**2);
+    if(dist<=pos.r){
+      hovered=true;
+      infoBox.style.display="block";
+      infoBox.style.left=(e.clientX+10)+"px";
+      infoBox.style.top=(e.clientY+10)+"px";
+      let coins = (name==="player")?civCoin:aiCivCoins[name];
+      let m = (name==="player")?money:aiMoney[name];
+      let mil = (name==="player")?military:50;
+      let eraName = (name==="player")?era:aiTechEra[name];
+      infoBox.innerHTML=`<strong>${name}</strong><br>CivCoin: ${coins} 🪙<br>Money: ${m} 💰<br>Military: ${mil} ⚔<br>Era: ${eraName} 🏛`;
+    }
+  });
+  if(!hovered) infoBox.style.display="none";
+});
+
+// ----- Diplomacy & Trade -----
+canvas.addEventListener("click",function(e){
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  Object.keys(positions).forEach(name=>{
+    let pos=positions[name];
+    let dist=Math.sqrt((mouseX-pos.x)**2+(mouseY-pos.y)**2);
+    if(dist<=pos.r && name!="player") openDiplomacyMenu(name);
+  });
+});
+
+function openDiplomacyMenu(aiName){
+  infoBox.style.display="block";
+  infoBox.style.left=(positions[aiName].x+220)+"px";
+  infoBox.style.top=(positions[aiName].y+10)+"px";
+  infoBox.innerHTML=`<strong>${aiName} Diplomacy</strong><br>
+    <button onclick='acceptAlliance("${aiName}")'>Accept Alliance 🤝</button><br>
+    <button onclick='tradeWithAI("${aiName}",50)'>Trade 50 CivCoin 💱</button><br>
+    <button onclick='declineAlliance("${aiName}")'>Decline ❌</button>`;
+}
+
+function acceptAlliance(ai){ aiAlliances[ai].push("player"); notifyMajorEvent(`You formed an alliance with ${ai} 🤝`); }
+function declineAlliance(ai){ let idx=aiAlliances[ai].indexOf("player"); if(idx!=-1) aiAlliances[ai].splice(idx,1); notifyMajorEvent(`You declined alliance with ${ai} ❌`); }
+function tradeWithAI(ai,amt){ if(civCoin<amt){alert("Not enough CivCoin"); return;} civCoin-=amt; aiCivCoins[ai]+=amt; createTradeFlow("player",ai,amt); notifyMajorEvent(`Traded ${amt} CivCoin with ${ai} 💱`); updateBalance(); }
+
+// ----- Trade Flows -----
+function createTradeFlow(from,to,amt){ tradeFlows.push({from:positions[from],to:positions[to],progress:0,amount:amt}); }
+function animateTradeFlows(){ tradeFlows.forEach((flow,index)=>{ flow.progress+=0.02; if(flow.progress>1){ tradeFlows.splice(index,1); return;} let x=flow.from.x+(flow.to.x-flow.from.x)*flow.progress; let y=flow.from.y+(flow.to.y-flow.from.y)*flow.progress; ctx.beginPath(); ctx.arc(x,y,Math.max(3,flow.amount/10),0,2*Math.PI); ctx.fillStyle="orange"; ctx.fill(); }); }
+
+// ----- AI Behavior -----
+function aiTurn(){
+  Object.keys(aiCivCoins).forEach(ai=>{
+    let memory = aiMemory[ai];
+    let betrayalCount = memory.filter(e=>e.eventType==="betrayal").length;
+    let tradeGenerous = memory.filter(e=>e.eventType==="tradeGenerous").length;
+    let focus="economy";
+    if(betrayalCount>2) focus="military";
+    else if(tradeGenerous>3) focus="science";
+    if(focus=="economy"){ if(Math.random()<0.6){ let amt=Math.floor(Math.random()*30+10); createTradeFlow(ai,"player",amt); aiCivCoins[ai]-=amt; civCoin+=amt; notifyMajorEvent(`${ai} trades ${amt} CivCoin with you 💱`); }}
+    else if(focus=="military"){ military+=5; }
+    else if(focus=="science"){ science+=3; }
+  });
+}
+
+// ----- Notifications -----
+function notifyMajorEvent(msg){ alertBox.innerText=msg; alertBox.style.display="block"; setTimeout(()=>{alertBox.style.display="none";},4000); }
+
+// ----- Blockchain Integration -----
+async function connectWallet(){
+    if(window.ethereum){
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        playerAddress = await signer.getAddress();
+        civCoinContract = new ethers.Contract(civCoinAddress, civCoinAbi, signer);
+        notifyMajorEvent(`Wallet connected: ${playerAddress}`);
+    } else { alert("Install Metamask to play with blockchain CivCoin!"); }
+}
+
+async function withdrawToBlockchain(amount){
+    if(civCoin<amount){ alert("Not enough internal CivCoin"); return; }
+    try{
+        let tx = await civCoinContract.mint(playerAddress, ethers.utils.parseUnits(amount.toString(), 18));
+        await tx.wait();
+        civCoin-=amount; updateBalance();
+        notifyMajorEvent(`Minted ${amount} CivCoin on blockchain ✅`);
+    } catch(e){ console.error(e); alert("Blockchain transaction failed!"); }
+}
+
+async function depositFromBlockchain(amount){
+    try{
+        let tx = await civCoinContract.burn(playerAddress, ethers.utils.parseUnits(amount.toString(), 18));
+        await tx.wait();
+        civCoin+=amount; updateBalance();
+        notifyMajorEvent(`Deposited ${amount} CivCoin from blockchain ✅`);
+    } catch(e){ console.error(e); alert("Blockchain transaction failed!"); }
+}
+
+function updateBalance(){ document.getElementById("playerBalance").innerText=`Player Balance: ${civCoin} CivCoin`; }
+
+// ----- Main Loop -----
+function gameLoop(){ drawMap(); aiTurn(); year++; setTimeout(gameLoop,2000); }
+updateBalance(); gameLoop();
+</script>
+</body>
+</html>
