@@ -217,6 +217,143 @@ the right order is not the same as being the right size. The largest loss was
 only half repaid. This is why the profile is reported test by test. An average
 would make this case look mostly just and hide the 20,000 shortfall.
 
+## Recording the inputs in the merit ledger
+
+The shield can only screen what has been written down. ADAM's merit ledger
+already keeps two append-only, hash-chained files: `ledger.jsonl` for changes to
+standing and to the rules, and `audit_log.jsonl` for every grading decision.
+Each line names its decider and is signed. This section says what those files
+would need to hold so that every input the five tests use is on record before
+anyone runs them.
+
+This is a proposal. The ledger isn't in this repository yet, so the field names
+below are suggestions to settle when it lands.
+
+### Principles
+
+- **C is a rule, so it goes where rules go.** The criterion for a task is
+  published as a rule change in `ledger.jsonl`, with its measure and scale. Like
+  any rule, it binds nobody until its fingerprint has been delivered to everyone
+  it affects. That gives "C must be stated before any test is run" a timestamp
+  and a hash instead of a promise.
+- **C can't be changed after the fact.** Changing it is a new rule line that
+  applies from then on. A decision is always judged under the criterion that was
+  in force when it was made, which it cites by fingerprint.
+- **Inputs are recorded with the decision, not reconstructed later.** The
+  party's measure on C goes into the decision line at grading time, by the same
+  decider and under the same signature.
+- **A check is itself a record.** Running the five tests produces a profile, and
+  the profile is appended to the audit log as a decision by a formula, so it can
+  be appealed like any other.
+- **The shield never moves standing.** An intercept doesn't take standing from
+  one person and give it to another, because the ledger has no transfers. It
+  sends the decision back for a new, appealable grading, or triggers a remedy
+  paid in civcoin.
+
+### What each record holds
+
+**1. Criterion rule** (`ledger.jsonl`, kind `rule`). Declares C for a task.
+
+```json
+{"kind": "rule", "task": "flood-aid-2026", "criterion": "need",
+ "measure": {"what": "shortfall below shelter threshold", "unit": "score", "scale": [1, 3]},
+ "direction": null,
+ "thresholds": {"acceptance_gap": 0.20, "remedy_tolerance": 0.10, "measurement_error": 0},
+ "decider": "trenton", "fingerprint": "sha256:..."}
+```
+
+`direction` is only used when C is harm: `"caused"` for a penalty, `"suffered"`
+for compensation. For equality, `measure` is `null`, since there is nothing to
+measure. If a task needs two criteria, it publishes two rule lines and every
+decision under it records both measures.
+
+**2. Grading decision** (`audit_log.jsonl`, kind `decision`). The line the
+ledger already writes, with four additions.
+
+```json
+{"kind": "decision", "task": "flood-aid-2026", "subject": "household-B",
+ "rule": "sha256:...", "measures": {"need": 3},
+ "outcome": 100,
+ "attributes": {"district": "south"},
+ "procedure": {"notice": "sha256:...", "hearing": "sub-0042", "reasons": "...",
+               "impartial_decider": true, "appeal": "open"},
+ "decider": "committee", "reasoning": "...", "signature": "..."}
+```
+
+- `rule` cites the criterion rule by fingerprint.
+- `measures` holds the subject's value on each C in force, in the rule's unit.
+- `outcome` is the size of what the decision gave or took, in a stated unit, so
+  test 2 can compare it with C.
+- `attributes` holds the things that should *not* matter (district, group,
+  status, wealth). Test 1 needs them to show which irrelevant difference
+  changed an outcome. They are personal data, so see the open questions below.
+
+**3. Acceptance survey** (`audit_log.jsonl`, kind `survey`). Input for test 4.
+It records who was asked, the rule they were shown (stated without naming who
+benefits), and counts per position, not individual answers.
+
+```json
+{"kind": "survey", "rule": "sha256:...",
+ "positions": {"north": {"asked": 50, "accepted": 39}, "south": {"asked": 48, "accepted": 34}},
+ "decider": "examiner", "signature": "..."}
+```
+
+**4. Wrong and remedy** (`audit_log.jsonl`, kind `wrong`). Input for test 5. A
+wrong is a decision like any other, so it is graded, signed and appealable. Its
+remedy is paid through civcoin's `remedy` command, and the wrong line cites the
+civcoin entry.
+
+```json
+{"kind": "wrong", "harmed": "farm-3", "harm": 40000, "unit": "money",
+ "remedy": {"civcoin_entry": 118, "restored": 20000},
+ "decider": "panel", "signature": "..."}
+```
+
+**5. Justice check** (`audit_log.jsonl`, kind `check`). The shield's output:
+one profile per criterion, the decisions it covers, the code version that
+produced it, and what the shield did.
+
+```json
+{"kind": "check", "criterion": "need", "rule": "sha256:...",
+ "covers": [101, 102, 103, 104], "code": "justice.py@812152e",
+ "profile": {"consistency": "fail", "proportionality": "fail", "procedure": "4/5",
+             "position_neutrality": "pass", "remedy": "n/a"},
+ "verdict": "unjust", "action": "intercept: returned for regrading",
+ "decider": "formula", "signature": "..."}
+```
+
+### Where each test gets its evidence
+
+| Test | Read from | Comes free from the ledger? |
+|------|-----------|------------------------------|
+| 1 Consistency | `measures`, `outcome` and `attributes` on decisions under the same rule | No. Needs `measures` and `attributes` recorded at grading time. |
+| 2 Proportionality | `measures` and `outcome` across those decisions | No. Needs `outcome` in a stated unit. |
+| 3 Procedure | (a) notice: the rule's fingerprint was delivered; (b) hearing: a submission is on record; (c) reasons: the decision's `reasoning`; (d) impartial decider: the decider isn't the subject and has no stake; (e) appeal: the appeal route is open and the appeal grader differs from the original decider | Mostly yes. The ledger already enforces delivered fingerprints, written reasoning and appeals graded by someone else. |
+| 4 Position-neutrality | `survey` lines for the rule | No. Surveys have to be run and recorded. |
+| 5 Remedy | `wrong` lines and the civcoin remedy they cite | Partly. civcoin already flags remedies more than 10% from the harm. |
+
+Procedure is the test the ledger answers almost by construction, which fits:
+the ledger was designed around notice, reasons and appeal. Tests 1 and 2 are
+where it needs the most new data, because the ledger records what each person
+got but not yet their measure on C.
+
+### Open questions
+
+- **Privacy of attributes.** Test 1 needs irrelevant attributes to detect
+  disparity, but writing someone's wealth or group into a permanent, readable
+  log is its own harm. One option is to store a salted hash or a coarse code in
+  the ledger and keep the raw value off-chain with the subject's consent.
+- **Who sets the measure's scale.** The scale for C has to be fixed before
+  outcomes are seen, or it can be tuned to fit them. Publishing it in the rule
+  line handles timing, but not whether the scale itself is fair. That question
+  is a candidate for the veil test.
+- **When checks run.** A check could run on every decision, on a schedule, or
+  only when someone appeals. Tests 1 and 2 need several decisions under the same
+  rule before they mean anything.
+- **Truncation.** Like civcoin, the ledger can't detect lines cut from its
+  end using the file alone. A check that covers decisions 101 to 104 should
+  also publish the head hash it saw.
+
 ## Scope and limits
 
 - **It measures fairness as evidenced**, not the whole concept of justice.
