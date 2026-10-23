@@ -32,7 +32,7 @@ How it works:
 - **Tamper-evident.** Each line carries a hash of itself and of the line before
   it, so an altered or deleted line breaks the chain.
 - **Signed.** Every decision names who made it (a named human, an examiner or a
-  formula) and is signed with that decider's SSH key.
+  formula) and is signed with that decider's ed25519 key.
 - **Published rules.** Each task lists its criteria. A pass means every
   criterion was met, and a fail says which ones weren't. A rule change binds
   nobody until its fingerprint has been delivered to everyone it affects.
@@ -40,6 +40,42 @@ How it works:
   person who made the decision can't grade the appeal.
 - **No transfers.** No command moves standing from one person to another.
   Standing is earned, never handed over.
+
+### Using the merit ledger
+
+`ledger.py` implements the merit part of the ledger today: signed,
+hash-chained entries recording points for a person and the reason. The audit
+log, published rules and appeals described above are not built yet.
+
+It needs Python 3.9+ and the `cryptography` package
+(`pip install -r requirements.txt`).
+
+```sh
+# Make a signing key. Prints the public key; keep the .pem file private.
+python3 ledger.py keygen alice.pem
+
+# Record merit, signed by that key and chained to the previous entry.
+python3 ledger.py append --key alice.pem --person bob --points 3 --reason "fixed the pump"
+
+# Check every hash, signature and chain link. Exits 1 on any problem.
+python3 ledger.py verify
+python3 ledger.py verify --trust <public key hex>   # also reject unknown signers
+
+python3 ledger.py show        # list entries
+python3 ledger.py standings   # total points per person
+```
+
+Pass `--ledger PATH` before the command to use a file other than
+`ledger.jsonl`.
+
+Each line holds `seq`, `prev` (the previous entry's hash, or 64 zeros for the
+first), `time`, `signer` (public key), `body`, `sig` and `hash`. The signature
+covers everything except `sig` and `hash`; the hash covers everything except
+itself. Editing, deleting or reordering a line breaks verification. Anyone can
+make a valid chain with their own key, so use `--trust` to say whose
+signatures count.
+
+Run the tests with `python3 -m unittest -v`.
 
 ## Justice
 
